@@ -12,12 +12,20 @@ terraform {
   backend "remote" {
     organization = "jdefrank-org"
     workspaces {
-      name = "terraform-cloud-demo-aws"
+      name = "terraform-cloud-demo-aws-2"
     }
   }
 }
 
 provider "aws" {
+  region = var.region
+}
+
+module "network" {
+  source  = "app.terraform.io/jdefrank-org/network/aws"
+  version = "0.0.3"
+  prefix = var.prefix
+  environment = var.environment
   region = var.region
 }
 
@@ -36,8 +44,9 @@ resource "aws_instance" "demo-instance" {
   instance_type               = var.instance_type
   key_name                    = aws_key_pair.demo-key-pair.key_name
   associate_public_ip_address = true
-  subnet_id                   = aws_subnet.demo-subnet.id
-  vpc_security_group_ids      = [aws_security_group.demo-security-group.id]
+  ### THE SUBNET ID AND SEC GRP ID ARE FROM THE MODULE
+  subnet_id                   = module.network.subnet_id
+  vpc_security_group_ids      = [module.network.vpc_security_group_id]
 
   tags = {
     Name        = "${var.prefix}-hashicat-instance"
